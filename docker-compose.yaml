@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # The main backend Django app
+  chat_main_app:
+    image: chat-backend-dev
+    container_name: chat_backend_dev
+    build: 
+      context: .
+    restart: always
+    # command: poetry run daphne -b 0.0.0.0 -p 8000 chat.asgi:application
+    command: daphne -b 0.0.0.0 -p 8005 chat.asgi:application
+
+    environment:
+      - DJANGO_SETTINGS_MODULE=chat.settings
+    volumes:
+      - static:/static
+      - venv:/app/venv
+      - .:/app
+    ports:
+      - 8005:8005
+    expose:
+      - 8005
+    env_file:
+      - .env
+    
+    networks:
+      - chat_backend
+
+  chat_db:
+      container_name: chat_db
+      image: postgres:13
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: postgres
+      ports:
+        - "5432:5432"
+      
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+      
+      networks:
+        - chat_backend
+
+  # Nginx server 
+  chat_nginx: 
+    container_name: chat_nginx
+    image: nginx:1.19.0-alpine
+    ports:
+        - "443:443"
+        - "80:80"
+    volumes:
+        - ./nginx/${ENV_MODE:-production}.conf:/etc/nginx/conf.d/default.conf
+        - static:/static
+        - /etc/letsencrypt/ssl/fullchain.pem:/etc/nginx/ssl/fullchain.pem
+        - /etc/letsencrypt/ssl/privkey.pem:/etc/nginx/ssl/privkey.pem
+   
+    depends_on:
+      - chat_main_app
+    
+    networks:
+      - chat_backend
+
+  # Redis app
+  chat_redis_app:
+    container_name: chat_redis_app
+    image: 'bitnami/redis:latest'
+    environment:
+      - REDIS_PASSWORD=$REDIS_PASSWORD
+    ports:
+      - $REDIS_PORT:$REDIS_PORT
+    
+    networks:
+      - chat_backend
+
+  chat_django_q:
+    container_name: chat_django_q
+    build: .
+    restart: always
+    command: python manage.py qcluster
+    volumes:
+      - .:/app
+    
+    networks:
+      - chat_backend
+ 
+volumes:
+  static:
+  venv:
+  pgdata: {}
+
+networks:
+  chat_backend:
+    driver: bridge

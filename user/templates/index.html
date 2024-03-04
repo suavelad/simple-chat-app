@@ -1,0 +1,37 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chat</title>
+</head>
+<body>
+    <ul id="messages"></ul>
+    <input type="text" id="messageInput" />
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        const socket = io.connect('ws://your-backend-domain/chat/2/');  // Replace with your actual backend domain and recipient ID
+
+        socket.on('chat.message', function(message) {
+            const messagesList = document.getElementById('messages');
+            const li = document.createElement('li');
+            li.appendChild(document.createTextNode(`${message.sender}: ${message.content}`));
+            messagesList.appendChild(li);
+        });
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value;
+
+            if (content) {
+                socket.emit('send.message', { content, recipient_id: 2 });
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
