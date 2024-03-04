@@ -14,17 +14,16 @@
 
 
 
-=> Set Header with "token" : This token is gotten using the login api ( access_token )
-
-
 => Sample Websocket Payload : {
                                     "sender" : 1,
                                     "receiver" : 2,
                                     "message": "Hi John
                                 }
+
+
 => Sample Websocket Query Param :
-            token : "dfdfdfdfdfdgddg"
-            user: 1
+                                 token : "dfdfdfdfdfdgddg" ( this is the access token gotten from login)
+                                 user: 1
 
 
 
