@@ -3,7 +3,6 @@ from django.shortcuts import render
 
 from django.conf import settings
 
-from decouple import config
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -196,6 +195,8 @@ class UserViewSet(ModelViewSet):
         if the_user == user:
             return the_user
 
+
+    @extend_schema(exclude=True)    
     def create(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
