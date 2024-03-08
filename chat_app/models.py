@@ -4,6 +4,7 @@ from user.models import User
 
 # Create your models here.
 
+
 class ChatThread(models.Model):
     sender = models.ForeignKey(
         User,
@@ -27,8 +28,6 @@ class ChatThread(models.Model):
         return f"Chat Thread ID: {self.id} "
 
 
-
-
 class ChatHistory(models.Model):
     thread = models.ForeignKey(
         ChatThread,
@@ -41,11 +40,9 @@ class ChatHistory(models.Model):
     archived = models.DateTimeField(blank=True, null=True, editable=False)
     is_edited = models.BooleanField(default=False)
     read_receipt = models.BooleanField(default=False)
-    read_timestamp = models.DateTimeField(null=True,blank=True)
+    read_timestamp = models.DateTimeField(null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Chat History ID: {self.id} | Receiver: {self.thread.receiver.first_name} {self.thread.receiver.last_name} | Receiver: {self.thread.sender.first_name} {self.thread.sender.last_name}  "
-
-

@@ -178,8 +178,6 @@ class AuthViewSet(GenericViewSet):
             return error_400(error_message)
 
 
-   
-
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all().order_by("-id")
     serializer_class = UserSerializer
@@ -195,8 +193,7 @@ class UserViewSet(ModelViewSet):
         if the_user == user:
             return the_user
 
-
-    @extend_schema(exclude=True)    
+    @extend_schema(exclude=True)
     def create(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -210,5 +207,4 @@ class UserViewSet(ModelViewSet):
 
 
 def index(request):
-    return render(request, 'index.html')
-    
+    return render(request, "index.html")

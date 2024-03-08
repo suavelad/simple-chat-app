@@ -31,6 +31,7 @@ DEBUG = config("DEBUG", False)
 ALLOWED_URL = [
     "http://localhost:8005",
     "http://localhost:3002",
+    "http://localhost:3000",
 ]
 
 
@@ -194,10 +195,18 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + ["Set-Cookie"]
 
 
-CORS_ORIGIN_WHITELIST = ("http://localhost:3002", "http://localhost:8005")
+CORS_ORIGIN_WHITELIST = (
+    "http://localhost:3002",
+    "http://localhost:8005",
+    "http://localhost:3000",
+)
 
 CORS_ALLOW_ORIGINS = ALLOWED_URL
-CORS_ALLOWED_ORIGINS = ["http://localhost:3002", "http://localhost:8005"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3002",
+    "http://localhost:8005",
+    "http://localhost:3000",
+]
 
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = True

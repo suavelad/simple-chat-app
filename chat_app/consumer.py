@@ -4,16 +4,14 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 from channels.db import database_sync_to_async
 
-from chat_app.models import ChatHistory,ChatThread
+from chat_app.models import ChatHistory, ChatThread
 from loguru import logger
 
 from user.models import User
 
 
-
 @database_sync_to_async
-def save_chat_history(receive_data,receiver_user_id, user):
-    # from user.models import User
+def save_chat_history(receive_data, receiver_user_id, user):
 
     message = receive_data.get("message", None)
     chat_id = receive_data.get("chat_id", None)
@@ -21,10 +19,11 @@ def save_chat_history(receive_data,receiver_user_id, user):
     receiver_user = User.objects.filter(id=receiver_user_id).first()
     sender_user = user
 
-
     if receiver_user and sender_user:
 
-        chat_thread,_ = ChatThread.objects.get_or_create(sender=sender_user,receiver=receiver_user)
+        chat_thread, _ = ChatThread.objects.get_or_create(
+            sender=sender_user, receiver=receiver_user
+        )
         history = (
             ChatHistory()
             if chat_id == None
@@ -43,8 +42,16 @@ def save_chat_history(receive_data,receiver_user_id, user):
             return {
                 "type": "chat.message",
                 "content": message,
+                "chat_id": history.id,
                 "thread_id": history.thread.id,
-                "sender": history.sender.username,
+                "sender": {
+                    "sender": f"{history.sender.first_name} {history.sender.last_name}",
+                    "sender_id": history.sender.id,
+                },
+                "receiver": {
+                    "receiver": f"{history.receiver.first_name} {history.receiver.last_name}",
+                    "receiver_id": history.receiver.id,
+                },
                 "timestamp": str(history.date_created),
             }
         else:
@@ -73,14 +80,19 @@ def update_chat_read_status(receive_data):
 
 
 @database_sync_to_async
-def get_thread_id(sender_user,receiver_user_id):
-    # from user.models import User
-     
+def get_thread_id(sender_user=None, receiver_user_id=None, thread_id=None):
+    if thread_id:
+        chat_thread = ChatThread.objects.filter(id=thread_id).first()
+        return chat_thread.id
+
     receiver_user = User.objects.filter(id=receiver_user_id).first()
+
     if not receiver_user:
         return None
-    
-    chat_thread,_ = ChatThread.objects.get_or_create(sender=sender_user,receiver=receiver_user)
+
+    chat_thread, _ = ChatThread.objects.get_or_create(
+        sender=sender_user, receiver=receiver_user
+    )
     return chat_thread.id
 
 
@@ -93,16 +105,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if isinstance(user, AnonymousUser):
             logger.error("Annon")
-            pass
+            logger.debug("Not authenticated")
+            return
 
         if user and user.is_authenticated:
-            receiver_user_id = self.scope['url_route']['kwargs']['receiver_id']
+            receiver_user_id = self.scope["url_route"]["kwargs"]["receiver_id"]
+            thread_id = await get_thread_id(user, receiver_user_id)
 
-            thread_id = await get_thread_id(user,receiver_user_id)
+            self.group_name = f"thread_{thread_id}"
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
 
-            self.group_name = f'thread_{thread_id}'
-            await self.channel_layer.group_add(self.group_name,self.channel_name)
-            
             await self.accept()
             logger.info("Connected....")
 
@@ -113,10 +125,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         receive_data = json.loads(text_data)
         user = self.scope.get("user")
-        receiver_user_id = self.scope['url_route']['kwargs']['receiver_id']
+        receiver_user_id = self.scope["url_route"]["kwargs"]["receiver_id"]
         if user.is_authenticated:
 
-            payload = await save_chat_history(receive_data,receiver_user_id, user)
+            payload = await save_chat_history(receive_data, receiver_user_id, user)
             if payload:
                 await self.send(text_data=json.dumps(payload))
 
@@ -137,15 +149,22 @@ class ChatReadStatusConsumer(AsyncWebsocketConsumer):
         logger.info("Connecting......")
 
         user = self.scope.get("user")
+        thread_id = self.scope["url_route"]["kwargs"]["thread_id"]
+        new_thread_id = await get_thread_id(thread_id=thread_id)
+
+        if not new_thread_id:
+            logger.error("Annon")
+            logger.debug("No Thread Id found")
+            return
 
         if isinstance(user, AnonymousUser):
             logger.error("Annon")
             pass
 
         if user and user.is_authenticated:
-            
-            self.group_name = 'receipt'
-            await self.channel_layer.group_add(self.group_name,self.channel_name)
+
+            self.group_name = f"receipt_{thread_id}"
+            await self.channel_layer.group_add(self.group_name, self.channel_name)
 
             await self.accept()
             logger.info("Connected....")
@@ -154,16 +173,21 @@ class ChatReadStatusConsumer(AsyncWebsocketConsumer):
         pass
 
     async def send_read_receipt(self, event):
-            data = json.loads(event.get('value'))
-            receiver_id = data['receiver_id']
-            read_status = data['status']
-            thread_id = data['thread_id']
-            await self.send(text_data=json.dumps({
-                'receiver_id':receiver_id,
-                'thread_id': thread_id,
-                'read_status':read_status
-            }))
-
+        data = json.loads(event.get("value"))
+        receiver_id = data["receiver_id"]
+        read_status = data["status"]
+        thread_id = data["thread_id"]
+        chat_id = data["chat_id"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "receiver_id": receiver_id,
+                    "thread_id": thread_id,
+                    "read_status": read_status,
+                    "chat_id": chat_id,
+                }
+            )
+        )
 
     async def receive(self, text_data=None, bytes_data=None):
 

@@ -43,7 +43,6 @@ urlpatterns = [
     path("api/v1/auth/", include(("user.urls"))),
     path("api/v1/chat/", include("chat_app.urls.chat")),
     path("api/v1/thread/", include("chat_app.urls.thread")),
-
     path(
         "api/schema/download/",
         SpectacularAPIView.as_view(),
