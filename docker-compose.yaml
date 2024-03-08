@@ -84,6 +84,19 @@ services:
     
     networks:
       - chat_backend
+    
+  
+  chat-react:
+    build: ./frontend/chat-app
+    volumes:
+      - ./frontend/chat-app:/usr/src/app
+    command: npm start
+    ports:
+      - "3000:3000"
+    depends_on:
+      - chat_main_app
+    networks:
+      - chat_backend
  
 volumes:
   static:

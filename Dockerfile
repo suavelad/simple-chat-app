@@ -1,5 +1,5 @@
 # Pull official base image 
-FROM --platform=amd64 python:3.11-slim
+FROM --platform=amd64 python:3.12-slim
 
 # Set env variables
 ENV PYTHONDONTWRITEBYTECODE 1
