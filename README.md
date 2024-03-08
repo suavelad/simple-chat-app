@@ -32,3 +32,8 @@
 
 
 2.  ws://localhost:8005/ws/chat/read_status/  : To get the read receipt status
+3.  
+
+
+
+== For the Frontend React App : http://localhost:3000
