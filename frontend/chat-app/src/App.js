@@ -5,17 +5,18 @@ import Login from './Login';
 import Chat from './Chat';
 
 function App() {
-  const [authToken, setAuthToken] = useState(null);
+  const [authData, setAuthData] = useState(null);
+  
   
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>Peer-to-Peer Chat App</h1>
-        {authToken ? (
-          <Chat authToken={authToken} />
+        {authData ? (
+          <Chat authData={authData} />
         ) : (
-          <Login setAuthToken={setAuthToken} />
+          <Login setAuthData={setAuthData} />
         )}
       </header>
     </div>

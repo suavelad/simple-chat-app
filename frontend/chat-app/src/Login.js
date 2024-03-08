@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const Login = ({ setAuthToken }) => {
+const Login = ({ setAuthData  }) => {
   const [email, setEmail] = useState('sunday01@example.com');
   const [password, setPassword] = useState('12345678');
 
@@ -15,8 +15,8 @@ const Login = ({ setAuthToken }) => {
       });
       console.info('Login ok:', response.data);
 
-      const { token } = response.data;
-      setAuthToken(token);
+      const data = response.data;
+      setAuthData(data);
     } catch (error) {
       console.error('Login failed:', error.message);
     }
