@@ -1,18 +1,23 @@
+import asyncio
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema
+from rest_framework.decorators import action
+
+
 from .models import ChatHistory, ChatThread
 from .serializer import (
     ChatHistorySerializer,
     ChatThreadSerializer,
     GetThreadIdSerializer,
     GetThreadByUserSerializer,
+    CreateChatMessageSerializer,
 )
 from chat.utils import CustomPagination, serializer_errors, error_400
-
-from drf_spectacular.utils import extend_schema
-from rest_framework.decorators import action
+from .utils import save_chat_history
 
 
 # Create your views here.
@@ -20,7 +25,7 @@ class ChatHistoryViewSet(ModelViewSet):
     queryset = ChatHistory.objects.all().order_by("-id")
     serializer_class = ChatHistorySerializer
     pagination_class = CustomPagination
-    http_method_names = ["get", "head", "delete"]
+    http_method_names = ["get", "head", "delete", "post"]
 
     def get_queryset(self):
         user = self.request.user
@@ -30,6 +35,21 @@ class ChatHistoryViewSet(ModelViewSet):
 
         if chat_history.sender == user or chat_history.receiver == user:
             return chat_history
+
+    @extend_schema(request=CreateChatMessageSerializer)
+    def create(self, request, *args, **kwargs):
+        serializer = CreateChatMessageSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            message = serializer.data.get("message", None)
+            receiver_id = serializer.data.get("receiver_id", None)
+            user = request.user
+            receive_data = {"message": message, "receiver_id": receiver_id}
+            response_data = save_chat_history(receive_data, user)
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        else:
+            default_errors = serializer.errors
+            error_message = serializer_errors(default_errors)
+            return error_400(error_message)
 
     @extend_schema(exclude=True)
     def update(self, request, *args, **kwargs):

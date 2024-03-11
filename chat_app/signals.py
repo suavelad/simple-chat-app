@@ -23,3 +23,16 @@ def send_read_receipt(sender, instance, created, **kwargs):
         async_to_sync(channel_layer.group_send)(
             group_name, {"type": "send_read_receipt", "value": json.dumps(data)}
         )
+
+
+@receiver(post_save, sender=ChatHistory)
+def send_message_to_receiver(sender, instance, created, **kwargs):
+    if created:
+        channel_layer = get_channel_layer()
+
+        data = {"chat_id": instance.id}
+        group_name = f"thread_user_{instance.receiver.id}"
+
+        async_to_sync(channel_layer.group_send)(
+            group_name, {"type": "send_to_receiver", "value": json.dumps(data)}
+        )

@@ -80,3 +80,8 @@ class GetThreadIdSerializer(serializers.Serializer):
 
 class GetThreadByUserSerializer(serializers.Serializer):
     thread_id = serializers.IntegerField(required=True)
+
+
+class CreateChatMessageSerializer(serializers.Serializer):
+    message = serializers.CharField(required=True)
+    receiver_id = serializers.CharField(required=True)
